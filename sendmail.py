@@ -5,8 +5,8 @@ from email.mime.base import MIMEBase
 from email import encoders
 import os
 
-sender = 'user1@gmail.com'
-receiver = 'user1@gmail.com'
+sender = 'user2@gmail.com'
+receiver = 'user2@gmail.com'
 subject = 'Test Email with Attachment'
 body = 'This is a test email with an attachment sent from Python.'
 

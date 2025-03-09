@@ -3,7 +3,7 @@ import email
 from email import policy
 from email.parser import BytesParser
 
-username = 'user1'
+username = 'user2'
 password = '12345'
 
 try:

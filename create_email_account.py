@@ -4,7 +4,12 @@ import sys
 
 def create_user(username, password):
     # Define the Docker exec command
-  command = ['docker', 'exec', 'postfix-smtp', "useradd", "-m", "-p", password, username] # -m to create user home dir in /home, -p for inline password
+  command = [
+    'docker', 'exec', 'postfix-smtp', 'sh', '-c',  #sh -c tells docker to run commadn in a shell inside the container
+    f'useradd -m {username} && echo "{username}:{password}" | chpasswd'
+]
+#   useradd -m user: Creates the user and creates the home directory (-m).
+# echo "user:password" | chpasswd: Sets the password for user to password. chpasswd hashes the password automatically.
 
     # Execute the command
   docker_result = subprocess.run(command, capture_output=True, text=True)
@@ -23,4 +28,5 @@ if __name__ == "__main__":
         sys.exit(1)
     username = sys.argv[1]
     password = sys.argv[2]
+   
     create_user(username, password)
