@@ -1,26 +1,25 @@
 import imaplib
-import email
 from email import policy
 from email.parser import BytesParser
 
-username = 'user2'
-password = '12345'
 
-try:
+
+def get_emails(email, password):
+    username = email.split('@')[0]
     mail = imaplib.IMAP4('localhost')
     mail.login(username, password)
     mail.select('inbox')
 
     status, messages = mail.search(None, 'ALL')
     mail_ids = messages[0].split()
+    emails = []
 
     for mail_id in mail_ids:
         status, msg_data = mail.fetch(mail_id, '(RFC822)')
         msg = BytesParser(policy=policy.default).parsebytes(msg_data[0][1])
         
-        print(f'From: {msg["from"]}')
-        print(f'Subject: {msg["subject"]}')
-        print('Body:')
+        text_result = f'From: {msg["from"]}\nSubject: {msg["subject"]}\nBody: '
+        mail_file = None
         
         if msg.is_multipart():
             for part in msg.walk():
@@ -30,16 +29,20 @@ try:
                 if "attachment" in content_disposition:
                     filename = part.get_filename()
                     if filename:
-                        with open(filename, 'wb') as f:
+                        mail_file = "./attachments/" + filename + f"_{mail_id}"
+                        with open(mail_file, 'wb') as f:
                             f.write(part.get_payload(decode=True))
-                        print(f'Saved attachment to current working directory: {filename}')
                 elif content_type == 'text/plain':
-                    print(part.get_payload(decode=True).decode())
+                    text_result += part.get_payload(decode=True).decode()
         else:
-            print(msg.get_payload(decode=True).decode())
-        
-        print('-' * 50)
+            text_result += part.get_payload(decode=True).decode()
+
+        emails.append( {
+            "mail_id": mail_id,
+            "text_result": text_result,
+            "attachment": mail_file
+        })
 
     mail.logout()
-except Exception as e:
-    print(f'Failed to retrieve emails: {e}')
+    return emails
+ 
