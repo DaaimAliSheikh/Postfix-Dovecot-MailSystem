@@ -24,7 +24,7 @@ def delete_all_emails(email, password):
 
 
 def delete_email(email, password, mail_id):
-    user = email.split('@')[0]
+    username = email.split('@')[0]
     try:
         mail = imaplib.IMAP4('localhost')
         mail.login(username, password)

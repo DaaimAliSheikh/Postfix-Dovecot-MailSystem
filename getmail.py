@@ -1,6 +1,8 @@
 import imaplib
 from email import policy
 from email.parser import BytesParser
+import os
+from pathlib import Path
 
 
 
@@ -18,7 +20,7 @@ def get_emails(email, password):
         status, msg_data = mail.fetch(mail_id, '(RFC822)')
         msg = BytesParser(policy=policy.default).parsebytes(msg_data[0][1])
         
-        text_result = f'From: {msg["from"]}\nSubject: {msg["subject"]}\nBody: '
+        body = ""
         mail_file = None
         
         if msg.is_multipart():
@@ -27,19 +29,23 @@ def get_emails(email, password):
                 content_disposition = str(part.get("Content-Disposition"))
                 
                 if "attachment" in content_disposition:
+                    # Create a Path object
                     filename = part.get_filename()
+
                     if filename:
-                        mail_file = "./attachments/" + filename + f"_{mail_id}"
+                        mail_file = f'./attachments/{mail_id}_{filename}' 
                         with open(mail_file, 'wb') as f:
                             f.write(part.get_payload(decode=True))
                 elif content_type == 'text/plain':
-                    text_result += part.get_payload(decode=True).decode()
+                    body += part.get_payload(decode=True).decode()
         else:
-            text_result += part.get_payload(decode=True).decode()
+            body += part.get_payload(decode=True).decode()
 
         emails.append( {
+            "from": msg["from"],
+            "subject": msg["subject"],
+            "body": body,
             "mail_id": mail_id,
-            "text_result": text_result,
             "attachment": mail_file
         })
 
