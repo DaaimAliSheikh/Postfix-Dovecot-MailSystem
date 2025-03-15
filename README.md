@@ -1,71 +1,135 @@
-Setup docker container with port mapping:
+# Postfix SMTP & Dovecot Setup in Docker
+
+## Overview
+This guide explains how to set up a Docker container running **Postfix SMTP** and **Dovecot** for email services with **port mapping**. The setup includes configuring both services and running a frontend using **Streamlit**.
+
+## Prerequisites
+- **Docker** installed on your system
+- Basic understanding of Linux and Docker commands
+
+## Step 1: Run the Docker Container
+```sh
 docker run -it --name postfix-smtp -p 25:25 -p 143:143 ubuntu
+```
+> **Note:** Inside the Docker container, you are already the root user. Do not use `sudo`.
 
-NOTE: Don't use sudo inside docker, you are already root user
+## Step 2: Install Postfix & Dovecot
+```sh
+apt update
+apt install nano postfix dovecot-core dovecot-imapd
+```
+### Postfix Configuration Prompts:
+- **Choose:** Internet Site
+- **System Mail Name:** (e.g., `gmail.com`)
+- For the rest, choose randomly.
 
-Step 1: Install Postfix and Dovecot
-sudo apt update
-sudo apt install nano postfix dovecot-core dovecot-imapd
--Choose Internet Site
--System Mail Name, eg: gmail.com
--For rest, choose randomly
-
-Step 2: Configure Postfix
-sudo nano /etc/postfix/main.cf
-
+## Step 3: Configure Postfix
+Edit the Postfix main configuration file:
+```sh
+nano /etc/postfix/main.cf
+```
+Update the following lines:
+```ini
 myhostname = gmail.com
 myorigin = /etc/mailname
 mydestination = $myhostname, localhost.$mydomain, localhost
 relayhost =
 mynetworks = 127.0.0.0/8
 inet_interfaces = all
-home_mailbox = Maildir/ # every user will have a Maildir where their mails will be stored
+home_mailbox = Maildir/  # Every user will have a Maildir where their mails will be stored
+```
 
-Step 3: Configure Dovecot
-
-sudo nano /etc/dovecot/dovecot.conf
+## Step 4: Configure Dovecot
+### Update `dovecot.conf`
+```sh
+nano /etc/dovecot/dovecot.conf
+```
+Modify:
+```ini
 protocols = imap
+```
 
-sudo nano /etc/dovecot/conf.d/10-mail.conf
+### Update `10-mail.conf`
+```sh
+nano /etc/dovecot/conf.d/10-mail.conf
+```
+Modify:
+```ini
 mail_location = maildir:~/Maildir
+```
 
-sudo nano /etc/dovecot/conf.d/10-auth.conf
-disable_plaintext_auth = no # if using docker, then no, otherwise can be yes(plaintext auth not allowed over non secure TLS/SSL connections)
+### Update `10-auth.conf`
+```sh
+nano /etc/dovecot/conf.d/10-auth.conf
+```
+Modify:
+```ini
+disable_plaintext_auth = no  # Set to 'no' if using Docker
 auth_mechanisms = plain login
+```
 
-sudo nano /etc/dovecot/conf.d/10-master.conf
+### Update `10-master.conf`
+```sh
+nano /etc/dovecot/conf.d/10-master.conf
+```
+Modify:
+```ini
 service imap-login {
-inet_listener imap {
-port = 143
+    inet_listener imap {
+        port = 143
+    }
 }
-}
+```
 
-Step 4: Restart the services to apply configurations
-sudo systemctl restart postfix
-sudo systemctl restart dovecot
+## Step 5: Restart Services
+Restart Postfix and Dovecot to apply the configurations:
+```sh
+systemctl restart postfix
+systemctl restart dovecot
+```
 
-If in docker container:
+## Step 6: Start Services in Docker
+If running inside a Docker container, use a script to start services:
+```sh
+bash ./start_services.sh
+```
+**What this script does:**
+- Starts the Docker container specified by the CONTAINER_ID variable inside the script
+- Starts Postfix inside the container
+- Starts Dovecot inside the container
 
-Initiate services(They don't automatically start on installation/container restart, have to manually start after performing the configurations/restarting):
-start postfix: postfix start
-start dovecot: /usr/sbin/dovecot -c /etc/dovecot/dovecot.conf
-
-restart services:
-restart the container and start the service again
-
-Step 5: Add your users
-sudo adduser mailuser
-
-Step 6: Running the frontend
+## Step 7: Running the Frontend
+```sh
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run main.py
+```
 
-Additional Notes:
+## Useful Docker Commands
+### List all containers:
+```sh
+docker ps -a
+```
+### Start/Restart/Stop a container:
+```sh
+docker start/restart/stop <container_id>
+```
+### Access a running container:
+```sh
+docker exec -it <container_id> bash
+```
+### Remove a container:
+```sh
+docker container rm <container_id>
+```
 
-- docker ps -a to list containers
-- docker start/restart/stop <container_id>
-- docker exec -it <container_id> bash to go into container
-- docker container rm <container_id>
-- postfix/dovecot logs: sudo tail -f /var/log/mail.log
+## Logs
+Check logs for debugging Postfix and Dovecot:
+```sh
+tail -f /var/log/mail.log
+```
+
+---
+
+
