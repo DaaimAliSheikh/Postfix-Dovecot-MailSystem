@@ -69,4 +69,4 @@ Additional Notes:
 - docker exec -it <container_id> bash to go into container
 - docker container rm <container_id>
 - postfix/dovecot logs: sudo tail -f /var/log/mail.log
-- delete user with home direactory
+- delete user with home direactory: userdel -r daaim
