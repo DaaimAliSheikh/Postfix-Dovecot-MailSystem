@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 
 
-
 def get_emails(email, password):
     username = email.split('@')[0]
     mail = imaplib.IMAP4('localhost')
@@ -19,21 +18,21 @@ def get_emails(email, password):
     for mail_id in mail_ids:
         status, msg_data = mail.fetch(mail_id, '(RFC822)')
         msg = BytesParser(policy=policy.default).parsebytes(msg_data[0][1])
-        
+
         body = ""
         mail_file = None
-        
+
         if msg.is_multipart():
             for part in msg.walk():
                 content_type = part.get_content_type()
                 content_disposition = str(part.get("Content-Disposition"))
-                
+
                 if "attachment" in content_disposition:
                     # Create a Path object
                     filename = part.get_filename()
 
                     if filename:
-                        mail_file = f'./attachments/{mail_id}_{filename}' 
+                        mail_file = f'./attachments/{mail_id}_{filename}'
                         with open(mail_file, 'wb') as f:
                             f.write(part.get_payload(decode=True))
                 elif content_type == 'text/plain':
@@ -41,7 +40,7 @@ def get_emails(email, password):
         else:
             body += part.get_payload(decode=True).decode()
 
-        emails.append( {
+        emails.append({
             "from": msg["from"],
             "subject": msg["subject"],
             "body": body,
@@ -51,4 +50,3 @@ def get_emails(email, password):
 
     mail.logout()
     return emails
- 
